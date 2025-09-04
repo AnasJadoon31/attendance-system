@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+.table-row-present {
+  @apply bg-green-100;
+}
+
+.table-row-absent {
+  @apply bg-red-100;
+}

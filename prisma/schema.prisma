@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Roster {
+  id        Int       @id @default(autoincrement())
+  name      String
+  students  Student[]
+  sessions  AttendanceSession[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Student {
+  id               Int      @id @default(autoincrement())
+  roster           Roster   @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  rosterId         Int
+  name             String
+  enrollmentNumber String
+  extra            Json?
+  notes            String?
+  records          AttendanceRecord[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([rosterId, enrollmentNumber])
+}
+
+model AttendanceSession {
+  id          Int      @id @default(autoincrement())
+  roster      Roster   @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  rosterId    Int
+  subject     String
+  sessionDate DateTime @db.Date
+  locked      Boolean  @default(false)
+  records     AttendanceRecord[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Status {
+  PRESENT
+  ABSENT
+}
+
+model AttendanceRecord {
+  id        Int              @id @default(autoincrement())
+  session   AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId Int
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId Int
+  status    Status           @default(PRESENT)
+  notes     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([sessionId, studentId])
+}
