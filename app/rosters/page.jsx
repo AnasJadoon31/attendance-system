@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 
 export default async function RostersPage() {
@@ -9,6 +10,15 @@ export default async function RostersPage() {
     const name = formData.get('name');
     if (!name) return;
     await prisma.roster.create({ data: { name } });
+    revalidatePath('/rosters');
+  }
+
+  async function deleteRoster(formData) {
+    'use server';
+    const id = Number(formData.get('id'));
+    if (!id) return;
+    await prisma.roster.delete({ where: { id } });
+    revalidatePath('/rosters');
   }
 
   return (
@@ -26,8 +36,23 @@ export default async function RostersPage() {
       </form>
       <ul className="space-y-2">
         {rosters.map((r) => (
-          <li key={r.id} className="p-2 bg-white rounded shadow">
-            <Link href={`/rosters/${r.id}`}>{r.name}</Link>
+          <li
+            key={r.id}
+            className="p-2 bg-white rounded shadow flex items-center justify-between"
+          >
+            <Link href={`/rosters/${r.id}`} className="flex-grow">
+              {r.name}
+            </Link>
+            <form action={deleteRoster}>
+              <input type="hidden" name="id" value={r.id} />
+              <button
+                type="submit"
+                className="ml-4 text-red-600 hover:text-red-800"
+                aria-label="Delete roster"
+              >
+                Delete
+              </button>
+            </form>
           </li>
         ))}
       </ul>
