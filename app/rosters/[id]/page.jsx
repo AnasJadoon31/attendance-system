@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import * as XLSX from 'xlsx';
+
+export const runtime = 'nodejs';
 
 export default async function RosterPage({ params }) {
   const rosterId = Number(params.id);
@@ -19,7 +22,6 @@ export default async function RosterPage({ params }) {
     'use server';
     const file = formData.get('file');
     if (!file || typeof file === 'string') return;
-    const XLSX = await import('xlsx');
     const buf = Buffer.from(await file.arrayBuffer());
     const workbook = XLSX.read(buf, { type: 'buffer' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -117,49 +119,49 @@ export default async function RosterPage({ params }) {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <h1 className="text-3xl font-semibold">{roster.name}</h1>
-      <form action={addStudent} className="flex flex-wrap gap-2">
+      <form action={addStudent} className="flex flex-col sm:flex-row gap-2">
         <input
           type="text"
           name="enrollmentNumber"
           placeholder="Enrollment #"
-          className="border p-2 rounded"
+          className="border p-2 rounded w-full sm:w-40"
           required
         />
         <input
           type="text"
           name="name"
           placeholder="Student name"
-          className="border p-2 rounded flex-grow"
+          className="border p-2 rounded flex-grow w-full"
           required
         />
-        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
           Add Student
         </button>
       </form>
 
       <form
         action={importAction}
-        className="flex flex-wrap gap-2"
+        className="flex flex-col sm:flex-row gap-2"
         encType="multipart/form-data"
       >
         <input
           type="file"
           name="file"
           accept=".xlsx,.csv"
-          className="flex-grow border p-2 rounded"
+          className="border p-2 rounded w-full sm:flex-grow"
           required
         />
-        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
           Import
         </button>
         <a
           href={`/api/rosters/${rosterId}/export`}
-          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-center"
         >
           Export CSV
         </a>
       </form>
-      <div className="overflow-auto">
+      <div className="overflow-x-auto">
         <table className="min-w-full bg-white rounded shadow">
           <thead>
             <tr>
