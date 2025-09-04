@@ -142,7 +142,6 @@ export default async function RosterPage({ params }) {
       <form
         action={importAction}
         className="flex flex-col sm:flex-row gap-2"
-        encType="multipart/form-data"
       >
         <input
           type="file"
