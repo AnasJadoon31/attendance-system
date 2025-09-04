@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import * as XLSX from 'xlsx';
 
 export default async function RosterPage({ params }) {
   const rosterId = Number(params.id);
@@ -20,6 +19,7 @@ export default async function RosterPage({ params }) {
     'use server';
     const file = formData.get('file');
     if (!file || typeof file === 'string') return;
+    const XLSX = await import('xlsx');
     const buf = Buffer.from(await file.arrayBuffer());
     const workbook = XLSX.read(buf, { type: 'buffer' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -106,45 +106,55 @@ export default async function RosterPage({ params }) {
     revalidatePath(`/rosters/${rosterId}`);
   }
 
+  async function deleteStudent(formData) {
+    'use server';
+    const id = Number(formData.get('id'));
+    if (!id) return;
+    await prisma.student.delete({ where: { id } });
+    revalidatePath(`/rosters/${rosterId}`);
+  }
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">{roster.name}</h1>
-      <form action={addStudent} className="mb-4 flex gap-2">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <h1 className="text-3xl font-semibold">{roster.name}</h1>
+      <form action={addStudent} className="flex flex-wrap gap-2">
         <input
           type="text"
           name="enrollmentNumber"
           placeholder="Enrollment #"
-          className="border p-2"
+          className="border p-2 rounded"
           required
         />
         <input
           type="text"
           name="name"
           placeholder="Student name"
-          className="border p-2 flex-grow"
+          className="border p-2 rounded flex-grow"
           required
         />
-        <button className="bg-blue-500 text-white px-4 py-2 rounded">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
           Add Student
         </button>
       </form>
 
       <form
         action={importAction}
-        className="mb-4 flex gap-2"
+        className="flex flex-wrap gap-2"
         encType="multipart/form-data"
       >
         <input
           type="file"
           name="file"
           accept=".xlsx,.csv"
-          className="flex-grow"
+          className="flex-grow border p-2 rounded"
           required
         />
-        <button className="bg-blue-500 text-white px-4 py-2 rounded">Import</button>
+        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          Import
+        </button>
         <a
           href={`/api/rosters/${rosterId}/export`}
-          className="bg-green-500 text-white px-4 py-2 rounded"
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
         >
           Export CSV
         </a>
@@ -160,16 +170,23 @@ export default async function RosterPage({ params }) {
                   {k}
                 </th>
               ))}
+              <th className="p-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {roster.students.map((s) => (
-              <tr key={s.id} className="border-t">
+              <tr key={s.id} className="border-t odd:bg-gray-50">
                 <td className="p-2">{s.enrollmentNumber}</td>
                 <td className="p-2">{s.name}</td>
                 {extraKeys.map((k) => (
                   <td key={k} className="p-2">{s.extra?.[k] || ''}</td>
                 ))}
+                <td className="p-2">
+                  <form action={deleteStudent}>
+                    <input type="hidden" name="id" value={s.id} />
+                    <button className="text-red-600 hover:underline">Delete</button>
+                  </form>
+                </td>
               </tr>
             ))}
           </tbody>
